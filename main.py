@@ -16,7 +16,7 @@ def start_job():
         username = content['username']
         password = content['password']
     except:
-        pass
+        return jsonify(),500
     #always create new session for bypass verification code.
     session = requests.session()
     res = login(session=session,username=username,password=password)
