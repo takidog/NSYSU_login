@@ -2,6 +2,7 @@ import requests
 from bs4 import BeautifulSoup
 import execjs
 
+load_js = execjs.compile(open("md5.js", 'r').read())
 
 def get_key(session):
 
@@ -13,8 +14,29 @@ def get_key(session):
     key = js_text[js_text.find('var _key = "')+12:js_text.find("function chec")-4]
     return key
 
-def login(session,username,password):
+def selcrs_login(session,username,password):
 
+    session.verify = False
+    session.headers.update({
+            'Accept': '*/*',
+            'Accept-Encoding': 'gzip, deflate, br',
+            'Accept-Language': 'zh-TW,zh;q=0.9,en-US;q=0.8,en;q=0.7,ja;q=0.6',
+            'Origin': 'null',
+            'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.169 Safari/537.36'
+        })
+    url = 'http://selcrs.nsysu.edu.tw/scoreqry/sco_query_prs_sso2.asp'
+    data = {
+        'SID':username,
+        'PASSWD':load_js.call('base64_md5',password),
+        'ACTION':'0',
+        'INTYPE':'1'
+        }
+    res = session.post(url=url , data=data)
+
+    return res
+    
+def sso_login(session,username,password):
+    #login main system sso
     session.verify = False
     session.headers.update({
             'Accept': '*/*',
@@ -24,8 +46,7 @@ def login(session,username,password):
             'Origin': 'https://sso.nsysu.edu.tw',
             'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.169 Safari/537.36'
         })
-    key = get_key(session)
-    load_js = execjs.compile(open("md5.js", 'r').read())
+    key = get_key(session)    
 
     password_b64 = load_js.call('base64_md5', password)
     s_value = load_js.call("hex_hmac_md5", key, password_b64)
